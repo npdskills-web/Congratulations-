@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Congratulations Notification</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eff2f6;
+      overflow: hidden;
+      font-family: Calibri, Arial, sans-serif;
+      position: relative;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    .notification-text {
+      font-size: 64px;
+      font-weight: bold;
+      color: #152d79 !important;
+      margin: 0;
+      text-align: center;
+      z-index: 10;
+      position: relative;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 15px;
+      height: 8px;
+      background: red;
+      border-radius: 2px;
+      animation: shootUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards, fallDown 2s ease-in 1.2s forwards;
+    }
+
+    @keyframes shootUp {
+      0% {
+        transform: translateY(0) translateX(0) rotate(0deg) scale(0);
+        opacity: 0;
+      }
+      10% {
+        transform: translateY(var(--shoot-y)) translateX(var(--shoot-x)) rotate(90deg) scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(var(--peak-y)) translateX(var(--peak-x)) rotate(360deg) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fallDown {
+      0% {
+        transform: translateY(var(--peak-y)) translateX(var(--peak-x)) rotate(360deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(700px) translateX(var(--fall-x)) rotate(1080deg);
+        opacity: 0;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <h1 class="notification-text" id="notificationText">Congratulations!</h1>
+  <script>
+    const defaultConfig = {
+      notification_text: "Congratulations!",
+      text_color: "#152d79",
+      background_color: "#eff2f6",
+      font_family: "Calibri",
+      font_size: 64
+    };
+
+    const colors = ['#ffd54f', '#ff8a65', '#66bb6a', '#42a5f5', '#26c6da', '#81c784', '#ffb74d', '#f48fb1', '#ba68c8', '#ff7043'];
+
+    function createConfetti() {
+      const burstSize = 15; // Number of confetti per burst
+      const totalBursts = Math.ceil(100 / burstSize);
+      
+      for (let burst = 0; burst < totalBursts; burst++) {
+        const burstDelay = burst * 800; // 800ms pause between bursts
+        
+        for (let i = 0; i < burstSize && (burst * burstSize + i) < 100; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // Start from lower sides (left or right edge)
+            const isLeftSide = Math.random() < 0.5;
+            const startX = isLeftSide ? Math.random() * 10 : 90 + Math.random() * 10;
+            const startY = 75 + Math.random() * 20; // Start from lower area
+            
+            confetti.style.left = startX + '%';
+            confetti.style.top = startY + '%';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Calculate shooting trajectory (toward center-top)
+            const shootX = isLeftSide ? 200 + Math.random() * 300 : -200 - Math.random() * 300;
+            const shootY = -150 - Math.random() * 100;
+            const peakX = shootX * 1.5;
+            const peakY = -250 - Math.random() * 150;
+            // Make confetti fall at angle - left side falls right, right side falls left
+            const fallX = isLeftSide ? peakX + 150 + Math.random() * 300 : peakX - 150 - Math.random() * 300;
+            
+            confetti.style.setProperty('--shoot-x', shootX + 'px');
+            confetti.style.setProperty('--shoot-y', shootY + 'px');
+            confetti.style.setProperty('--peak-x', peakX + 'px');
+            confetti.style.setProperty('--peak-y', peakY + 'px');
+            confetti.style.setProperty('--fall-x', fallX + 'px');
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => {
+              confetti.remove();
+            }, 4000);
+          }, burstDelay + i * 20);
+        }
+      }
+    }
+
+    async function onConfigChange(config) {
+      const text = document.getElementById('notificationText');
+      text.textContent = config.notification_text || defaultConfig.notification_text;
+      text.style.color = '#152d79';
+      text.style.fontFamily = (config.font_family || defaultConfig.font_family) + ', Arial, sans-serif';
+      text.style.fontSize = (config.font_size || defaultConfig.font_size) + 'px';
+      document.body.style.background = config.background_color || defaultConfig.background_color;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => {
+              if (window.elementSdk) window.elementSdk.setConfig({ text_color: value });
+            }
+          },
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => {
+              if (window.elementSdk) window.elementSdk.setConfig({ background_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => config.font_family || defaultConfig.font_family,
+          set: (value) => {
+            if (window.elementSdk) window.elementSdk.setConfig({ font_family: value });
+          }
+        },
+        fontSizeable: {
+          get: () => config.font_size || defaultConfig.font_size,
+          set: (value) => {
+            if (window.elementSdk) window.elementSdk.setConfig({ font_size: value });
+          }
+        }
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["notification_text", config.notification_text || defaultConfig.notification_text]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Start everything
+    onConfigChange(window.elementSdk?.config || defaultConfig);
+    
+    setTimeout(() => {
+      createConfetti();
+    }, 100);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'997d79f314b68851',t:'MTc2MjAyMTk2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
